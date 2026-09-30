@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AnyCall — Bioacoustic Mobile Field Station</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#10b981">
+  <link rel="icon" type="image/png" href="icons/icon-512.png">
+</head>
+<body>
+
+  <!-- Top Brand Navigation Header -->
+  <header>
+    <div class="brand-area">
+      <img src="icons/icon-512.png" alt="AnyCall Logo" class="brand-icon">
+      <div>
+        <div class="brand-name">AnyCall <span style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">Mobile</span></div>
+        <div class="brand-tag">Bioacoustic Field Station</div>
+      </div>
+    </div>
+    <div>
+      <button class="btn btn-secondary" onclick="updateDbFromGitHub()" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;">
+        🔄 GitHub Sync
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-recorder')">🎙️ Record Call</button>
+    <button class="tab-btn" onclick="switchTab('tab-sync')">🔄 GitHub DB</button>
+    <button class="tab-btn" onclick="switchTab('tab-bank')">🧬 Species Bank (<span id="stat-species-count">53</span>)</button>
+    <button class="tab-btn" onclick="switchTab('tab-settings')">⚙️ Settings</button>
+  </nav>
+
+  <!-- Main Container -->
+  <main>
+
+    <!-- TAB 1: Live Field Recorder -->
+    <div id="tab-recorder" class="tab-content active">
+      <div class="card" style="text-align: center; padding: 1.5rem 1rem;">
+        <div class="card-title">Mobile Audio Field Tester</div>
+        <div class="card-subtitle">Tap below to capture a 3-second wildlife call from your phone microphone</div>
+
+        <div class="record-mic-btn" id="btn-record" onclick="toggleRecording()">
+          🎙️
+        </div>
+        <div id="record-label" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Tap to Record Call
+        </div>
+      </div>
+
+      <!-- Inference Result Card -->
+      <div class="card" id="rec-result-card" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Top Predicted Species</div>
+            <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin-top: 0.2rem;" id="res-species-name">--</div>
+          </div>
+          <span id="res-status-badge" class="badge badge-aves">MATCH</span>
+        </div>
+
+        <div style="margin-top: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.35rem;">
+            <span>Cosine Similarity Confidence</span>
+            <span id="res-conf-val" style="font-weight: 700;">--</span>
+          </div>
+          <div class="progress-container" style="margin: 0;">
+            <div class="progress-bar" id="res-conf-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Detections Feed -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div class="card-title" style="margin-bottom: 0;">Recent Field Log</div>
+          <label style="font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+            <input type="checkbox" id="toggle-hide-unknowns-app" onchange="renderDetectionsFeed()" style="accent-color: var(--accent);">
+            <span>Hide Unknowns</span>
+          </label>
+        </div>
+
+        <div id="detections-feed-container">
+          <p style="text-align: center; color: var(--text-muted); padding: 1rem;">No detections logged yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: GitHub Database Sync -->
+    <div id="tab-sync" class="tab-content">
+      <div class="card">
+        <div class="card-title">GitHub Species Prototype Auto-Updater</div>
+        <div class="card-subtitle">
+          Pull the latest vector embeddings (`anycall.db`) directly from the official GitHub repository repository (`main/anycall.db`).
+        </div>
+
+        <div style="padding: 0.85rem; background: #090d16; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.4rem;">
+            <span style="color: var(--text-muted);">Official Repo:</span>
+            <strong style="color: var(--accent);">techiitheblob/Anycall</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.4rem;">
+            <span style="color: var(--text-muted);">Remote File:</span>
+            <span style="font-family: monospace;">main/anycall.db</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem;">
+            <span style="color: var(--text-muted);">Last Sync Timestamp:</span>
+            <span id="db-last-sync-val" style="font-weight: 600;">Never</span>
+          </div>
+        </div>
+
+        <button class="btn" id="btn-sync-db" onclick="updateDbFromGitHub()">
+          🔄 Update DB from GitHub Now
+        </button>
+
+        <div id="db-progress-container" style="display: none; margin-top: 1rem;">
+          <div class="progress-container">
+            <div class="progress-bar" id="db-progress-bar"></div>
+          </div>
+          <div id="db-progress-text" style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+            Downloading species prototypes...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Enrolled Species Bank -->
+    <div id="tab-bank" class="tab-content">
+      <div class="card">
+        <div class="card-title">Enrolled Species Prototypes</div>
+        <div class="card-subtitle">Active prototypes stored on unit hypersphere &middot; Zero retraining required</div>
+
+        <div id="species-list-container">
+          <p style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading species database...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Settings -->
+    <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-title">AnyCall Edge Server Connection</div>
+        <div class="card-subtitle">Configure the IP or URL of your local AnyCall Edge Station server.</div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.35rem;">Edge Server API URL</label>
+          <input type="text" id="setting-server-url" style="width: 100%; background: #090d16; border: 1px solid var(--border); color: #fff; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem;" placeholder="http://192.168.1.100:8000">
+        </div>
+
+        <button class="btn" onclick="saveServerSettings()">💾 Save Server URL</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast">Operation completed successfully.</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
