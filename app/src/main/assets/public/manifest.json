@@ -1,0 +1,17 @@
+{
+  "short_name": "AnyCall",
+  "name": "AnyCall Bioacoustic Field Station",
+  "icons": [
+    {
+      "src": "icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#090d16",
+  "theme_color": "#10b981",
+  "display": "standalone",
+  "orientation": "portrait"
+}

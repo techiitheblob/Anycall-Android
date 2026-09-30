@@ -1,0 +1,257 @@
+:root {
+  --bg-main: #090d16;
+  --bg-card: #131b2e;
+  --bg-card-hover: #1a253e;
+  --border: #23304d;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent: #10b981;
+  --accent-glow: rgba(16, 185, 129, 0.25);
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --cyan: #06b6d4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+header {
+  background: #0c1322;
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--accent);
+}
+
+.brand-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.brand-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.nav-tabs {
+  display: flex;
+  background: #0f172a;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+main {
+  flex: 1;
+  padding: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.card-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+
+.btn {
+  background: var(--accent);
+  color: #022c22;
+  border: none;
+  padding: 0.65rem 1.1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  transition: transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #23304d;
+  color: var(--text-main);
+}
+
+.btn-amber {
+  background: var(--amber);
+  color: #451a03;
+}
+
+.progress-container {
+  background: #090d16;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  height: 12px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-aves { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.badge-insecta { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.badge-amphibia { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
+.badge-mammalia { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+.badge-unknown { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
+
+.species-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(35, 48, 77, 0.6);
+}
+
+.species-item:last-child {
+  border-bottom: none;
+}
+
+.record-mic-btn {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  border: 4px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  color: #fff;
+  margin: 1.25rem auto;
+  cursor: pointer;
+}
+
+.record-mic-btn.recording {
+  background: linear-gradient(135deg, #f43f5e, #f59e0b);
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.6);
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+#toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #1e293b;
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 200;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
