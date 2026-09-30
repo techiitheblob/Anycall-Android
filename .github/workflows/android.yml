@@ -21,21 +21,13 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Build Android APK
-        run: |
-          chmod +x gradlew || true
-          if [ -f "./gradlew" ] && [ -f "./gradle/wrapper/gradle-wrapper.jar" ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            gradle assembleDebug --stacktrace
-          fi
+      - name: Build Android APK with Gradle Wrapper
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload Compiled APK Binary Artifact
         uses: actions/upload-artifact@v4
