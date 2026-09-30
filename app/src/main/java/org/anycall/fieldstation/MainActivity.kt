@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate()
+        super.onCreate(savedInstanceState)
 
         webView = WebView(this)
         setContentView(webView)
