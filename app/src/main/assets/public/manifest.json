@@ -1,6 +1,6 @@
 {
-  "short_name": "AnyCall",
-  "name": "AnyCall Bioacoustic Field Station",
+  "short_name": "AnyCall v2",
+  "name": "AnyCall v2 — Bioacoustic Mobile Field Station",
   "icons": [
     {
       "src": "icons/icon-512.png",
@@ -10,8 +10,8 @@
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#090d16",
-  "theme_color": "#10b981",
+  "background_color": "#0b1410",
+  "theme_color": "#0f766e",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "any"
 }
