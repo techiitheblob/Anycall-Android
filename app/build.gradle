@@ -33,6 +33,9 @@ android {
     buildFeatures {
         viewBinding true
     }
+    aaptOptions {
+        noCompress "tflite"
+    }
 }
 
 dependencies {
@@ -42,4 +45,6 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
 }
+

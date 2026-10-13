@@ -1924,20 +1924,27 @@
             <div class="card">
               <div class="card-head">
                 <div>
-                  <div class="card-title">Mobile &amp; Edge Station Connection</div>
-                  <div class="card-desc">Configure Edge Server URL for Android APK / Remote Field Tablet</div>
+                  <div class="card-title">Backend Mode &amp; Edge Connection</div>
+                  <div class="card-desc">Run the AnyCall v2 engine standalone on-device or connect to a remote Edge Station</div>
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 0.65rem;">
                 <div>
-                  <label class="ctrl-label" for="setting-server-url">Edge Station API URL (leave blank if hosted on this origin)</label>
+                  <label class="ctrl-label" for="setting-backend-mode">Backend Execution Mode</label>
+                  <select id="setting-backend-mode" class="form-select" style="width: 100%; margin-top: 0.25rem;" onchange="saveBackendModeFromSettings(this.value)">
+                    <option value="standalone">📱 Standalone On-Device Backend (Runs locally on phone)</option>
+                    <option value="remote">🌐 Remote Edge Station Server (Connect via LAN / Wi-Fi)</option>
+                  </select>
+                </div>
+                <div id="setting-remote-url-box">
+                  <label class="ctrl-label" for="setting-server-url">Edge Station API URL (when using Remote Server mode)</label>
                   <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
                     <input type="text" id="setting-server-url" class="form-input mono" style="flex: 1;" placeholder="http://192.168.1.100:8000" />
                     <button class="btn btn-primary" onclick="saveServerUrlFromSettings()">Save URL</button>
                   </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                  <span class="mono" style="font-size: var(--text-xs); color: var(--text-muted);" id="db-last-sync-lbl">GitHub DB Sync: Ready</span>
+                  <span class="mono" style="font-size: var(--text-xs); color: var(--text-muted);" id="db-last-sync-lbl">On-Device Bundle: 52 Species Ready</span>
                   <button class="btn btn-sm" id="btn-github-sync" onclick="updateDbFromGitHub()">Sync Prototypes from GitHub</button>
                 </div>
               </div>
@@ -1993,17 +2000,24 @@
   <div class="modal-backdrop" id="modal-server" role="dialog" aria-modal="true" aria-labelledby="title-modal-server">
     <div class="modal-dialog">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 class="card-title" id="title-modal-server">Edge Station Server URL</h2>
+        <h2 class="card-title" id="title-modal-server">Backend Mode &amp; Server Config</h2>
         <button class="btn btn-sm" onclick="closeModal('modal-server')">✕</button>
       </div>
       <form onsubmit="saveServerModal(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
         <div>
-          <label class="ctrl-label" for="input-server-url">AnyCall v2 Edge Server URL</label>
+          <label class="ctrl-label" for="input-backend-mode">Execution Mode</label>
+          <select id="input-backend-mode" class="form-select" style="width: 100%; margin-top: 0.25rem;">
+            <option value="standalone">📱 Standalone On-Device Backend (Run locally on phone)</option>
+            <option value="remote">🌐 Remote Edge Station Server (Connect to PC / Pi)</option>
+          </select>
+        </div>
+        <div>
+          <label class="ctrl-label" for="input-server-url">Remote Edge Server URL (only used in Remote Mode)</label>
           <input type="text" id="input-server-url" class="form-input mono" style="width: 100%; margin-top: 0.25rem;" placeholder="http://192.168.1.100:8000 (or blank for local origin)" />
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
           <button type="button" class="btn" onclick="closeModal('modal-server')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Connect &amp; Sync</button>
+          <button type="submit" class="btn btn-primary">Apply &amp; Sync</button>
         </div>
       </form>
     </div>
@@ -2055,7 +2069,7 @@
             <option value="Aves">Aves (Bird)</option>
             <option value="Insecta">Insecta (Insect)</option>
             <option value="Amphibia">Amphibia (Amphibian)</option>
-            <option value="Mammalia">Mammalia (Mammal)</option>
+            <option value="Mammalia">Mammal</option>
           </select>
         </div>
         <div>
@@ -2110,6 +2124,7 @@
   <!-- ITEM 48: Live Toast with aria-live="polite" -->
   <div id="toast" role="status" aria-live="polite">Ready</div>
 
+  <script src="standalone-engine.js"></script>
   <script>
     /* =========================================================================
        STATE & UTILITIES
@@ -2163,6 +2178,12 @@
       return window.location.protocol === "file:" || window.location.hostname.includes("github.io") || !!window.AndroidBridge;
     }
 
+    function getBackendMode() {
+      const saved = localStorage.getItem("anycall_backend_mode");
+      if (saved === "standalone" || saved === "remote") return saved;
+      return isStandaloneMobileContext() ? "standalone" : "remote";
+    }
+
     function getServerBaseUrl() {
       const saved = (localStorage.getItem("anycall_server_url") || "").trim().replace(/\/+$/, "");
       if (saved) return saved;
@@ -2172,13 +2193,24 @@
 
     function apiUrl(path) {
       if (!path) return "";
-      if (path.startsWith("http://") || path.startsWith("https://")) return path;
+      if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")) return path;
       const base = getServerBaseUrl();
       return base ? `${base}${path.startsWith("/") ? path : "/" + path}` : path;
     }
 
-    /* Item 3: Checked Fetch Helper that inspects res.ok and surfaces HTTP status/detail */
+    function clipAudioUrl(windowId) {
+      if (typeof window.getClipAudioUrl === "function") {
+        const blobUrl = window.getClipAudioUrl(windowId);
+        if (blobUrl) return blobUrl;
+      }
+      return apiUrl(`/api/audio/${windowId}.wav`);
+    }
+
+    /* Item 3: Checked Fetch Helper that routes to On-Device Standalone Engine or Remote Server */
     async function apiFetch(url, options = {}) {
+      if (getBackendMode() === "standalone" && typeof window.standaloneApiFetch === "function") {
+        return await window.standaloneApiFetch(url, options);
+      }
       const res = await fetch(apiUrl(url), options);
       let payload = null;
       try { payload = await res.json(); } catch (_) {}
@@ -2203,6 +2235,13 @@
     function updateConnectionBadge(ok) {
       const pill = document.getElementById("conn-pill");
       const lbl = document.getElementById("conn-label");
+      if (getBackendMode() === "standalone") {
+        consecutivePollFailures = 0;
+        pill.setAttribute("data-conn", "connected");
+        const hasNative = !!(window.AndroidBridge && typeof window.AndroidBridge.hasNativeBirdNet === "function" && window.AndroidBridge.hasNativeBirdNet());
+        lbl.innerText = hasNative ? "On-Device · TFLite" : "Standalone · On-Device";
+        return;
+      }
       if (ok) {
         consecutivePollFailures = 0;
         pill.setAttribute("data-conn", "connected");
@@ -2307,18 +2346,35 @@
     }
 
     function openServerModal(btn) {
+      const modeSel = document.getElementById("input-backend-mode");
+      if (modeSel) modeSel.value = getBackendMode();
       document.getElementById("input-server-url").value = localStorage.getItem("anycall_server_url") || getServerBaseUrl();
       openModal("modal-server", btn);
     }
 
     function saveServerModal(e) {
       e.preventDefault();
+      const modeVal = document.getElementById("input-backend-mode")?.value || "standalone";
       const val = document.getElementById("input-server-url").value.trim().replace(/\/+$/, "");
+      localStorage.setItem("anycall_backend_mode", modeVal);
       localStorage.setItem("anycall_server_url", val);
+      const settingMode = document.getElementById("setting-backend-mode");
+      if (settingMode) settingMode.value = modeVal;
       const settingInp = document.getElementById("setting-server-url");
       if (settingInp) settingInp.value = val;
       closeModal("modal-server");
-      showToast(val ? `Edge Station URL set to ${val}` : "Using local origin server.");
+      showToast(modeVal === "standalone" ? "Running in Standalone On-Device mode." : (val ? `Remote Edge Station URL set to ${val}` : "Using local origin server."));
+      updateConnectionBadge(true);
+      loadMicDevices();
+      syncAllData();
+    }
+
+    function saveBackendModeFromSettings(modeVal) {
+      localStorage.setItem("anycall_backend_mode", modeVal);
+      const modalMode = document.getElementById("input-backend-mode");
+      if (modalMode) modalMode.value = modeVal;
+      showToast(modeVal === "standalone" ? "Switched to Standalone On-Device Backend." : "Switched to Remote Edge Station Server.");
+      updateConnectionBadge(true);
       loadMicDevices();
       syncAllData();
     }
@@ -2420,7 +2476,7 @@
       const h = canvas.height = canvas.clientHeight || 140;
 
       try {
-        const res = await fetch(apiUrl(`/api/audio/${windowId}.wav`));
+        const res = await fetch(clipAudioUrl(windowId));
         if (!res.ok) throw new Error("No WAV");
         const buf = await res.arrayBuffer();
         const audioCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 48000 * 3, 48000);
@@ -2650,7 +2706,7 @@
                     Window <strong>${escHtml(d.window_id)}</strong> &middot; &rho;<sub>deep</sub>: ${Number(d.rho_deep ?? 0).toFixed(2)} &middot; &rho;<sub>desc</sub>: ${Number(d.rho_desc ?? 0).toFixed(2)}
                   </div>
                   <div id="ledger-audio-slot-${escHtml(d.window_id)}">
-                    ${isExpanded ? `<audio controls autoplay src="${escHtml(apiUrl('/api/audio/' + d.window_id + '.wav'))}" style="width: 100%; max-width: 460px; height: 34px;"></audio>` : ''}
+                    ${isExpanded ? `<audio controls autoplay src="${escHtml(clipAudioUrl(d.window_id))}" style="width: 100%; max-width: 460px; height: 34px;"></audio>` : ''}
                   </div>
                 </div>
               </div>
@@ -2790,7 +2846,7 @@
           <canvas id="review-detail-spec"></canvas>
         </div>
 
-        <audio id="review-detail-audio" controls src="${escHtml(apiUrl('/api/audio/' + it.window_id + '.wav'))}" style="width: 100%; height: 36px;"></audio>
+        <audio id="review-detail-audio" controls src="${escHtml(clipAudioUrl(it.window_id))}" style="width: 100%; height: 36px;"></audio>
 
         <div style="display: flex; flex-direction: column; gap: 0.45rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
           <label class="ctrl-label" for="rev-detail-sp-input">Confirm or Reassign Species Label</label>
@@ -2961,7 +3017,7 @@
                   <span class="mono"><strong>${escHtml(wid)}</strong> <span style="color: var(--text-muted);" title="${escHtml(mTime.utc)}">&middot; ${escHtml(mTime.rel)} (${escHtml(mTime.utc)})</span></span>
                   <button class="btn btn-sm btn-danger" onclick="removeClusterMember('${escHtml(c.cluster_id)}', '${escHtml(m.item_id)}')">Remove</button>
                 </div>
-                <audio controls src="${escHtml(apiUrl('/api/audio/' + wid + '.wav'))}" style="width: 100%; height: 28px;" preload="none"></audio>
+                <audio controls src="${escHtml(clipAudioUrl(wid))}" style="width: 100%; height: 28px;" preload="none"></audio>
               </div>
             `;
           }).join("");
@@ -3702,8 +3758,11 @@
       const savedTheme = localStorage.getItem("anycall_theme") || "auto";
       setThemeMode(savedTheme);
       document.getElementById("lbl-expert-name").innerText = getExpert();
+      const settingMode = document.getElementById("setting-backend-mode");
+      if (settingMode) settingMode.value = getBackendMode();
       const settingInp = document.getElementById("setting-server-url");
       if (settingInp) settingInp.value = localStorage.getItem("anycall_server_url") || "";
+      updateConnectionBadge(true);
       if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
         navigator.serviceWorker.register("service-worker.js").catch(() => {});
       }

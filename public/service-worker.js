@@ -1,7 +1,9 @@
-const CACHE_NAME = "anycall-v2-mobile-v2";
+const CACHE_NAME = "anycall-v2-mobile-v3";
 const ASSETS = [
   "./",
   "./index.html",
+  "./standalone-engine.js",
+  "./standalone_bundle.json",
   "./manifest.json",
   "./icons/icon-512.png"
 ];
